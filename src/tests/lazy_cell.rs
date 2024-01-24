@@ -1,29 +1,12 @@
-use crate::WipeOnForkOnceCell;
+use crate::WipeOnForkLazyCell;
+use std::ops::Deref;
 
 #[test]
-fn test_once_cell() {
-    let a = WipeOnForkOnceCell::<u32>::new();
-    a.set(1).unwrap();
-    assert_eq!(*a.get().unwrap(), 1);
-}
-
-#[should_panic]
-#[test]
-fn test_once_cell_write_twice() {
-    let a = WipeOnForkOnceCell::<u32>::new();
-    a.set(1).unwrap();
-    a.set(1).unwrap();
-}
-
-#[test]
+#[cfg(unix)]
 fn wipe_on_fork() {
-    use core::cell::OnceCell;
+    let a = WipeOnForkLazyCell::new(|| std::process::id());
 
-    let a = WipeOnForkOnceCell::<u32>::new();
-    let b = OnceCell::<u32>::new();
-
-    let _ = a.get_or_init(|| 1u32);
-    let _ = b.get_or_init(|| 1u32);
+    let cur_process_id: u32 = a.deref().clone();
 
     let mut pipefd: [libc::c_int; 2] = [libc::c_int::default(), libc::c_int::default()];
 
@@ -39,21 +22,8 @@ fn wipe_on_fork() {
 
         let mut expected_flag = 0u8;
 
-        if !a.get().is_none() {
-            expected_flag = 1u8;
-        }
-
-        if !b.get().is_some() {
-            expected_flag = 1u8;
-        }
-
-        let _ = a.get_or_init(|| 2u32);
-        let _ = b.get_or_init(|| 2u32);
-
-        if !a.get().unwrap() == 2 {
-            expected_flag = 1u8;
-        }
-        if !b.get().unwrap() == 1 {
+        let child_process_id = std::process::id();
+        if child_process_id != *a.deref() {
             expected_flag = 1u8;
         }
 
@@ -72,8 +42,8 @@ fn wipe_on_fork() {
             libc::close(pipefd[1]);
         }
 
-        assert_eq!(*a.get().unwrap(), 1);
-        assert_eq!(*b.get().unwrap(), 1);
+        assert_eq!(cur_process_id, std::process::id());
+        assert_eq!(*a, std::process::id());
 
         let mut expected_flag = 2u8;
         unsafe {
