@@ -1,0 +1,11 @@
+[package]
+name = "wipe-on-fork"
+version = "0.1.0"
+authors = ["Weikeng Chen <weikeng.chen@l2iterative.com>"]
+edition = "2021"
+
+[lib]
+crate-type = ["rlib"]
+
+[profile.dev]
+opt-level = 3
