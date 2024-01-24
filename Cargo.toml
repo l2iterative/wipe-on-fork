@@ -3,9 +3,13 @@ name = "wipe-on-fork"
 version = "0.1.0"
 authors = ["Weikeng Chen <weikeng.chen@l2iterative.com>"]
 edition = "2021"
+license = "MIT OR Apache-2.0"
 
 [lib]
-crate-type = ["rlib"]
+crate-type = ["dylib", "rlib"]
 
 [profile.dev]
 opt-level = 3
+
+[dev-dependencies]
+libc = "0.2.152"
