@@ -1,6 +1,6 @@
 [package]
 name = "wipe-on-fork"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Weikeng Chen <weikeng.chen@l2iterative.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"

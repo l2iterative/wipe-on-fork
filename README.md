@@ -5,9 +5,9 @@
 There has been a conspiracy theory on who created the pyramids: Egyptians or aliens. Similarly, thousands of years 
 later, we can expect futurelings to ask who invented the Internet: humans or aliens?
 
-A historical, at that time, can cite the HTTP status code [418 I'm a teapot](https://en.wikipedia.org/wiki/Hyper_Text_Coffee_Pot_Control_Protocol), which was originally 
+A historian, at that time, can cite the HTTP status code [418 I'm a teapot](https://en.wikipedia.org/wiki/Hyper_Text_Coffee_Pot_Control_Protocol), which was originally 
 an April Fools' prank, to prove that HTTP was invented by living creatures that drink tea, make teapots, and carry
-a sense of humors. Shane Brunswick, who created the save418.com website that was crucial in the effort to not discard 418, 
+a sense of humors. Shane Brunswick, who created the [save418.com](https://save418.com/) website that was crucial in the effort to not discard 418, 
 said "It's a reminder that the underlying processes of computers are still made by humans."
 
 Similar things happen in other areas of computer science. `fork()` being one of them. It is a way for one process to 
