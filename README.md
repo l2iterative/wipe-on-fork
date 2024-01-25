@@ -20,23 +20,6 @@ Since `fork()` is a low-level operating systems primitive that performs changes 
 being transparent to, it always has a compatability issue. For Rust, it has been a headache (see https://github.com/rust-lang/rust/issues/6930,
 https://github.com/rust-lang/rust/issues/9373, https://github.com/rust-lang/rust/issues/9568, https://github.com/rust-lang/rust/issues/16799). 
 
-This is also an issue that involves CUDA. I believe that NVIDIA engineers have been routinely in the position to remind people 
-that child processes cannot use the parent processes' CUDA contexts after `fork()`. This now, however, is related to Rust.
-In RISC Zero's implementation of CUDA, it has a static global CUDA context that is lazy-initialized.
-```rust
-lazy_static! {
-    static ref CONTEXT: Context = {
-        let device = Device::get_device(0).unwrap();
-        let context = Context::new(device).unwrap();
-        context.set_flags(ContextFlags::SCHED_AUTO).unwrap();
-        context
-    };
-}
-```
-
-Now, if the child process, who would have the exact same copy of `CONTEXT` from the parent, uses this context, chances 
-are that the child would encounter segment faults. In general, "contexts" just cannot be shared across processes.
-
 This calls for a replacement to the `lazy_static!` above that child processes would need to run their own rather than 
 inherit it from the parent. This is closely related to a concept called "wipe-on-fork" in [Linux madvise function](https://man7.org/linux/man-pages/man2/madvise.2.html),
 which allows a program to advise the operating system to wipe a page upon being forked:
