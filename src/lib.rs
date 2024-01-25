@@ -7,6 +7,7 @@ pub use lazy_cell::WipeOnForkLazyCell;
 mod once_lock;
 pub use once_lock::WipeOnForkOnceLock;
 mod lazy_lock;
+pub use lazy_lock::WipeOnForkLazyLock;
 
 mod once;
 pub use once::{WipeOnForkOnce, WIPE_ON_FORK_ONCE_INIT};
