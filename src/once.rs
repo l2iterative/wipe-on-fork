@@ -26,7 +26,7 @@ pub enum State {
 /// });
 /// ```
 pub struct WipeOnForkOnce {
-    pid: Mutex<Option<u32>>,
+    generation_id: Mutex<Option<u64>>,
     state: Mutex<State>,
 }
 
@@ -48,10 +48,10 @@ pub struct WipeOnForkOnceState {
 }
 
 struct CompletionGuard<'a> {
-    pid: &'a Mutex<Option<u32>>,
+    generation_id: &'a Mutex<Option<u64>>,
     state: &'a Mutex<State>,
     set_state_on_drop_to: State,
-    set_pid_on_drop_to: Option<u32>,
+    set_generation_id_on_drop_to: Option<u64>,
 }
 
 impl<'a> Drop for CompletionGuard<'a> {
@@ -59,8 +59,8 @@ impl<'a> Drop for CompletionGuard<'a> {
         let mut lock = self.state.lock().unwrap();
         *lock = self.set_state_on_drop_to;
 
-        let mut lock = self.pid.lock().unwrap();
-        *lock = self.set_pid_on_drop_to;
+        let mut lock = self.generation_id.lock().unwrap();
+        *lock = self.set_generation_id_on_drop_to;
     }
 }
 
@@ -70,11 +70,11 @@ impl WipeOnForkOnce {
     #[cfg(unix)]
     #[inline]
     fn wipe_if_should_wipe(&self) {
-        let mut lock = self.pid.lock().unwrap();
+        let mut lock = self.generation_id.lock().unwrap();
 
         let res = match *lock {
             None => false,
-            Some(pid) => pid != std::process::id(),
+            Some(generation_id) => generation_id != crate::utils::GENERATION.get(),
         };
 
         if res {
@@ -90,7 +90,7 @@ impl WipeOnForkOnce {
     #[inline]
     pub const fn new() -> WipeOnForkOnce {
         WipeOnForkOnce {
-            pid: Mutex::new(None),
+            generation_id: Mutex::new(None),
             state: Mutex::new(State::Incomplete),
         }
     }
@@ -229,10 +229,10 @@ impl WipeOnForkOnce {
                 *self.state.lock().unwrap() = State::Running;
 
                 let mut guard = CompletionGuard {
-                    pid: &self.pid,
+                    generation_id: &self.generation_id,
                     state: &self.state,
                     set_state_on_drop_to: State::Poisoned,
-                    set_pid_on_drop_to: None,
+                    set_generation_id_on_drop_to: None,
                 };
                 let f_state = WipeOnForkOnceState {
                     poisoned: cur_state == State::Poisoned,
@@ -240,7 +240,7 @@ impl WipeOnForkOnce {
                 };
                 f(&f_state);
                 guard.set_state_on_drop_to = f_state.set_state_to.get();
-                guard.set_pid_on_drop_to = Some(std::process::id());
+                guard.set_generation_id_on_drop_to = Some(crate::utils::GENERATION.get());
             }
             State::Running => {
                 panic!("one-time initialization may not be performed recursively");

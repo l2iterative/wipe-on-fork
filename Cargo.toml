@@ -14,5 +14,5 @@ crate-type = ["dylib", "rlib"]
 [profile.dev]
 opt-level = 3
 
-[target.'cfg(unix)'.dev-dependencies]
+[dependencies]
 libc = "0.2.152"

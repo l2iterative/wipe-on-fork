@@ -14,7 +14,7 @@ use std::marker::PhantomData;
 /// assert!(cell.get().is_some());
 /// ```
 pub struct WipeOnForkOnceCell<T> {
-    pid: Cell<Option<u32>>,
+    generation_id: Cell<Option<u64>>,
     inner: UnsafeCell<Option<T>>,
     _not_send_sync: core::marker::PhantomData<*const ()>,
 }
@@ -23,9 +23,9 @@ impl<T> WipeOnForkOnceCell<T> {
     #[cfg(unix)]
     #[inline]
     fn check_if_should_wipe(&self) -> bool {
-        return match self.pid.get() {
+        return match self.generation_id.get() {
             None => false,
-            Some(pid) => pid != std::process::id(),
+            Some(generation_id) => generation_id != crate::utils::GENERATION.get(),
         };
     }
 
@@ -38,7 +38,7 @@ impl<T> WipeOnForkOnceCell<T> {
     #[inline]
     fn wipe_if_should_wipe(&self) {
         if self.check_if_should_wipe() {
-            self.pid.set(None);
+            self.generation_id.set(None);
             unsafe {
                 *self.inner.get() = None;
             }
@@ -49,7 +49,7 @@ impl<T> WipeOnForkOnceCell<T> {
     #[must_use]
     pub const fn new() -> Self {
         WipeOnForkOnceCell {
-            pid: Cell::new(None),
+            generation_id: Cell::new(None),
             inner: UnsafeCell::new(None),
             _not_send_sync: PhantomData,
         }
@@ -107,7 +107,7 @@ impl<T> WipeOnForkOnceCell<T> {
             return Err((old, value));
         }
 
-        self.pid.set(Some(std::process::id()));
+        self.generation_id.set(Some(crate::utils::GENERATION.get()));
 
         let slot = unsafe { &mut *self.inner.get() };
         Ok(slot.insert(value))
@@ -249,7 +249,7 @@ impl<T> From<T> for WipeOnForkOnceCell<T> {
     #[inline]
     fn from(value: T) -> Self {
         WipeOnForkOnceCell {
-            pid: Cell::new(Some(std::process::id())),
+            generation_id: Cell::new(Some(crate::utils::GENERATION.get())),
             inner: UnsafeCell::new(Some(value)),
             _not_send_sync: PhantomData,
         }

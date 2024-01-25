@@ -1,9 +1,8 @@
+use crate::{WipeOnForkLazyCell, WipeOnForkLazyLock, WipeOnForkOnceLock};
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::SeqCst;
 use std::sync::Mutex;
 use std::thread;
-use crate::{WipeOnForkLazyCell, WipeOnForkLazyLock, WipeOnForkOnceLock};
-
 
 static A: WipeOnForkLazyLock<u32> = WipeOnForkLazyLock::new(|| std::process::id());
 

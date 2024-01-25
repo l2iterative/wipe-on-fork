@@ -1,9 +1,9 @@
+use crate::once::ExclusiveState;
+use crate::WipeOnForkOnce;
 use std::cell::UnsafeCell;
 use std::mem::ManuallyDrop;
 use std::ops::Deref;
 use std::panic::{RefUnwindSafe, UnwindSafe};
-use crate::once::ExclusiveState;
-use crate::WipeOnForkOnce;
 
 /// ```
 /// use std::collections::HashMap;
@@ -60,7 +60,7 @@ impl<T, F: FnMut() -> T> WipeOnForkLazyLock<T, F> {
         WipeOnForkLazyLock {
             once: WipeOnForkOnce::new(),
             func: UnsafeCell::new(ManuallyDrop::new(f)),
-            data: UnsafeCell::new(ManuallyDrop::new(None))
+            data: UnsafeCell::new(ManuallyDrop::new(None)),
         }
     }
 
@@ -81,15 +81,16 @@ impl<T, F: FnMut() -> T> WipeOnForkLazyLock<T, F> {
             state => unsafe {
                 let this = ManuallyDrop::new(this);
                 match state {
-                    ExclusiveState::Incomplete => Err(
-                        ManuallyDrop::into_inner(std::ptr::read(&this.func).into_inner())
-                    ),
-                    ExclusiveState::Complete => Ok(
-                        ManuallyDrop::into_inner(std::ptr::read(&this.data).into_inner()).unwrap()
-                    ),
+                    ExclusiveState::Incomplete => Err(ManuallyDrop::into_inner(
+                        std::ptr::read(&this.func).into_inner(),
+                    )),
+                    ExclusiveState::Complete => Ok(ManuallyDrop::into_inner(
+                        std::ptr::read(&this.data).into_inner(),
+                    )
+                    .unwrap()),
                     ExclusiveState::Poisoned => unreachable!(),
                 }
-            }
+            },
         }
     }
 
@@ -127,9 +128,7 @@ impl<T, F> Drop for WipeOnForkLazyLock<T, F> {
     fn drop(&mut self) {
         match self.once.state() {
             ExclusiveState::Incomplete => unsafe { ManuallyDrop::drop(&mut self.func.get_mut()) },
-            ExclusiveState::Complete => unsafe {
-                ManuallyDrop::drop(&mut self.data.get_mut())
-            }
+            ExclusiveState::Complete => unsafe { ManuallyDrop::drop(&mut self.data.get_mut()) },
             ExclusiveState::Poisoned => {}
         }
     }

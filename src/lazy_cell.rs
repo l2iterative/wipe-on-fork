@@ -26,7 +26,7 @@ enum State<T, F> {
 /// //   92
 /// ```
 pub struct WipeOnForkLazyCell<T, F = fn() -> T> {
-    pid: Cell<Option<u32>>,
+    generation_id: Cell<Option<u64>>,
     state: UnsafeCell<State<T, F>>,
     _not_send_sync: PhantomData<*const ()>,
 }
@@ -44,7 +44,7 @@ impl<T, F: Fn() -> T> WipeOnForkLazyCell<T, F> {
     #[inline]
     pub const fn new(f: F) -> Self {
         WipeOnForkLazyCell {
-            pid: Cell::new(None),
+            generation_id: Cell::new(None),
             state: UnsafeCell::new(State::Uninit(f)),
             _not_send_sync: PhantomData,
         }
@@ -99,7 +99,7 @@ impl<T, F: Fn() -> T> WipeOnForkLazyCell<T, F> {
 
         unsafe { this.state.get().write(State::Init(data, f)) };
 
-        this.pid.set(Some(std::process::id()));
+        this.generation_id.set(Some(crate::utils::GENERATION.get()));
 
         let state = unsafe { &*this.state.get() };
         let State::Init(data, _) = state else {
@@ -113,9 +113,9 @@ impl<T, F> WipeOnForkLazyCell<T, F> {
     #[cfg(unix)]
     #[inline]
     fn check_if_should_wipe(&self) -> bool {
-        return match self.pid.get() {
+        return match self.generation_id.get() {
             None => false,
-            Some(pid) => pid != std::process::id(),
+            Some(generation_id) => generation_id != crate::utils::GENERATION.get(),
         };
     }
 
@@ -128,7 +128,7 @@ impl<T, F> WipeOnForkLazyCell<T, F> {
     #[inline]
     fn wipe_if_should_wipe(&self) {
         if self.check_if_should_wipe() {
-            self.pid.set(None);
+            self.generation_id.set(None);
 
             let is_state_init = unsafe {
                 match *self.state.get() {
