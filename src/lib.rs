@@ -4,15 +4,12 @@ pub use once_cell::WipeOnForkOnceCell;
 mod lazy_cell;
 pub use lazy_cell::WipeOnForkLazyCell;
 
-#[cfg(std)]
 mod once_lock;
-
-#[cfg(std)]
+pub use once_lock::WipeOnForkOnceLock;
 mod lazy_lock;
 
-#[cfg(std)]
 mod once;
+pub use once::{WipeOnForkOnce, WIPE_ON_FORK_ONCE_INIT};
 
-mod once;
 #[cfg(test)]
 mod tests;
