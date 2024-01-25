@@ -1,12 +1,13 @@
 [package]
 name = "wipe-on-fork"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Weikeng Chen <weikeng.chen@l2iterative.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "A replacement to OnceCell that wipes itself when being forked in Unix"
 documentation = "https://docs.rs/wipe-on-fork"
 repository = "https://github.com/l2iterative/wipe-on-fork"
+readme = "README.md"
 
 [lib]
 crate-type = ["dylib", "rlib"]

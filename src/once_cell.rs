@@ -16,7 +16,7 @@ use std::marker::PhantomData;
 pub struct WipeOnForkOnceCell<T> {
     generation_id: Cell<Option<u64>>,
     inner: UnsafeCell<Option<T>>,
-    _not_send_sync: core::marker::PhantomData<*const ()>,
+    _not_send_sync: PhantomData<*const ()>,
 }
 
 impl<T> WipeOnForkOnceCell<T> {

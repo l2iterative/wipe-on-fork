@@ -31,7 +31,7 @@ pub struct WipeOnForkLazyCell<T, F = fn() -> T> {
     _not_send_sync: PhantomData<*const ()>,
 }
 
-impl<T, F: Fn() -> T> WipeOnForkLazyCell<T, F> {
+impl<T, F: FnMut() -> T> WipeOnForkLazyCell<T, F> {
     /// ```
     /// use wipe_on_fork::WipeOnForkLazyCell;
     ///
@@ -91,7 +91,7 @@ impl<T, F: Fn() -> T> WipeOnForkLazyCell<T, F> {
     #[cold]
     unsafe fn really_init(this: &WipeOnForkLazyCell<T, F>) -> &T {
         let state = unsafe { &mut *this.state.get() };
-        let State::Uninit(f) = core::mem::replace(state, State::Poisoned) else {
+        let State::Uninit(mut f) = core::mem::replace(state, State::Poisoned) else {
             unreachable!()
         };
 
@@ -160,7 +160,7 @@ impl<T, F> WipeOnForkLazyCell<T, F> {
     }
 }
 
-impl<T, F: Fn() -> T> Deref for WipeOnForkLazyCell<T, F> {
+impl<T, F: FnMut() -> T> Deref for WipeOnForkLazyCell<T, F> {
     type Target = T;
     #[inline]
     fn deref(&self) -> &T {
